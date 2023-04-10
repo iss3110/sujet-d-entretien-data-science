@@ -1,5 +1,5 @@
-# sujet-d-entretien-data-science
-créer un modèle pour prévoir la vente des rollers dans la saison, 2 jeux de données fournies pour construire un modèle
+# sujet d'entretien data-science
+
 
 Je reviens vers vous concernant votre candidature au poste de stagiaire data
 scientist au sein de notre entreprise ~~SublimeSkinz~~. Nous vous proposons de passer
@@ -41,10 +41,12 @@ des scripts python.
 Vous trouverez ci-joint :  
 - dataset_train.csv  
 - dataset_test.csv  
-
 Si vous avez le moindre problème avec le jeu de données ou des questions,
 n'hésitez surtout pas à me contacter.  
 Cordialement.  
+
 ---  
-Kévin.H  
-Data Analyst, Sublime Skinz  
+
+~~Kévin.H~~  
+~~Data Analyst, Sublime Skinz~~  
+
