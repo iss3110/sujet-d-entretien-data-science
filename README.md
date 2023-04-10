@@ -1,4 +1,4 @@
-<center> # sujet d'entretien data-science</center>  
+# sujet d'entretien data-science  
 
 
 ---  
