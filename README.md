@@ -1,4 +1,4 @@
-\begin{center} # sujet d'entretien data-science \end{center}  
+<center> # sujet d'entretien data-science<center>  
 
 
 ---  
