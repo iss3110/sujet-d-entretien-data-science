@@ -53,3 +53,7 @@ Cordialement.
 ~~Kévin.H~~  
 ~~Data Analyst, Sublime Skinz~~  
 
+
+---  
+
+## Cloner le dossier principal en copiant le lien https dans l'onglet <>Code, allez sur RStudio, File, New Project, Version de Control, Git, coller le lien dans Repository URL, avant tout, il faut synchroniser son github avec l'environnement local Git RStudio
