@@ -1,6 +1,6 @@
-\begin{center}
-# sujet d'entretien data-science
-\end{center}
+# sujet d'entretien data-science  
+
+
 ---  
 
 
