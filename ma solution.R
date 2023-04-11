@@ -1,14 +1,14 @@
 data_train <- read.csv('dataset_train.csv',sep=";")
 
-dataset_train <- read_delim("dataset_train.csv",delim = ";", escape_double = FALSE, trim_ws = TRUE)
-str(dataset_train)
+# dataset_train <- read_delim("dataset_train.csv",delim = ";", escape_double = FALSE, trim_ws = TRUE)
+# str(dataset_train)
 str(data_train)
 head(data_train)
 summary(data_train)
 dt=as.data.frame(data_train[order(data_train[,1],decreasing=F), ])
 
 table(dt$season)
-?table
+# ?table
 n=length(dt$datetime)
 #modele a effet mixtes ?
 #On remarque que la variable season est mal codée, elle prend 12 modalités au lieu de 4
@@ -96,9 +96,10 @@ head(dft$registered)
 
 library(dplyr)
 #la library dplyr
-dft1 <- dft %>% filter(!is.na(dft$casual),!is.na(dft$registred))#sans NA
+dft1 <- dft %>% dplyr::filter(!is.na(dft$casual))#sans NA
+# dft1 <- dft1 %>% dplyr::filter(!is.na(dft1$registred))
 n_na <- length(dft1[,1])
-?dplyr
+# ?dplyr
 summary(dft1)
 
 #### graphes ####
