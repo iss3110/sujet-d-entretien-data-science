@@ -30,7 +30,8 @@ season[index_printemps]="2" #printemps
 
 #index_hiver=as.logical(rep(1,n)-index_ete-index_automne-index_printemps)
 
-season=as.factor(season)
+season <- factor(season,levels = c(1,2,3,4),labels = c("hiver","printemps","été","automne"))
+str(season)
 
 #### holiday ####
 
@@ -91,8 +92,6 @@ dft=data.frame(timedata,season,holidayy,workingdayy,weather,dt$temp,dt$atemp,dt$
 names(dft)[match(names(dft)[c(1,3,4,6,7,8,9,10,11,12)],names(dft))] <- c("datetime","holiday","workingday","temp","atemp","humidity","windspeed","casual","registered","count")
 head(dft)
 summary(dft)
-str(dft)
-head(dft$registered)
 
 library(dplyr)
 #la library dplyr
@@ -106,21 +105,25 @@ summary(dft1)
 colnames(dft1)[1] <- "timedata"
 # ventes totales
 library(ggplot2)
-p <- ggplot(dft1, aes(x= dft1$timedata ,y=dft1$count,col=dft1$season,group=as.factor(dft1$holiday)))
-p <- p + geom_point()+ geom_smooth(method=lm)
+p <- ggplot(dft1, aes(x=timedata ,y=count,col=season))
+p <- p + geom_point() +
+  xlab("dates") + 
+  ylab("Ventes par heure") +
+  labs(col='Ventes moyennes par saison')
 p
+# :1 = printemps , 2 = été, 4 = hiver'
 
 # vente des clients enregistrés
 
 p <- ggplot(dft1, aes(x= dft1$timedata ,y=dft1$registred,col=dft1$season,group=as.factor(dft1$holiday)))
 p <- p + geom_point()+ geom_smooth(method=lm)
-p
+#p
 
 # vente des clients non enregistrés :
 
 p <- ggplot(dft1, aes(x= dft1$timedata ,y=dft1$casual,col=dft1$season,group=as.factor(dft1$holiday)))
 p <- p + geom_point()+ geom_smooth(method=lm)
-p
+#p
 
 
 
