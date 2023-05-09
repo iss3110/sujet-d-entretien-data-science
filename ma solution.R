@@ -253,3 +253,4 @@ colnames(train.fact)
 model1=lme(fixed=train$count~train$season+train$tempfact+train$atempfact,random=~1|train$tempfact)
 coef(model1)
 summary(model1)
+
