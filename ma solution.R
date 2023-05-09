@@ -1,22 +1,15 @@
-data_train <- read.csv('dataset_train.csv',sep=";")
+train <- read.csv('dataset_train.csv',sep=";")
 
-# dataset_train <- read_delim("dataset_train.csv",delim = ";", escape_double = FALSE, trim_ws = TRUE)
-# str(dataset_train)
-str(data_train)
-head(data_train)
-summary(data_train)
-dt=as.data.frame(data_train[order(data_train[,1],decreasing=F), ])
+str(train)
+head(train)
+summary(train)
+train=as.data.frame(train[order(train[,1],decreasing=F), ])
 
-table(dt$season)
+table(train$season)
 # ?table
-n=length(dt$datetime)
+n=length(train$datetime) # 10886
 #modele a effet mixtes ?
-#On remarque que la variable season est mal codée, elle prend 12 modalités au lieu de 4
-
-install.packages("timeDate")
-library(timeDate)
-
-timedata <- as.timeDate(dt$datetime)
+#On remarque que la variable season est mal codée, elle prend 12 modalités au lieu de 4 (-2,1.5,Mist..)
 
 season=rep("1",n)#hiver
 index_ete=( as.numeric( format(timedata,format = "%m%d")) > 0620) & (as.numeric(format(timedata, format = "%m%d")) < 0923) #été
@@ -30,22 +23,28 @@ season[index_printemps]="2" #printemps
 
 #index_hiver=as.logical(rep(1,n)-index_ete-index_automne-index_printemps)
 
-season <- factor(season,levels = c(1,2,3,4),labels = c("hiver","printemps","été","automne"))
+season <- factor(season,levels = c(1,2,3,4),labels = c("1-hiver","2-printemps","3-été","4-automne"))
 str(season)
-
+table(season) # maintenant la variable season est bien codée
+train[0:15,]
+length(season) # 10886
+length(train$season)
+train$season <- season
+train[0:15,]
+View(train) # la variable season est bien remise
 #### holiday ####
 
 #holiday:
 #il y a 73 valeurs non indiquées de la variable holiday
-index_na_holi=which(is.na(dt$holiday))
-holidayy=dt$holiday
+index_na_holi=which(is.na(train$holiday))
+holidayy=train$holiday
 holidayy[index_na_holi]=holidayy[index_na_holi-1] #les valeurs non indiquées prennent la valeur la plus proche (supposant que c'est la plus probable)
 holidayy=as.factor(holidayy)
-
+train$holiday <- holidayy
 
 
 #workingday:
-workingdayy=dt$workingday
+workingdayy=train$workingday
 index_na_wo=which(is.na(workingdayy))
 
 #t[35,]
@@ -67,12 +66,13 @@ for (i in 1:n)
 
 workingdayy=as.factor(workingdayy)
 
+train$workingday <- workingdayy
 #### weather ####
 
 #la meme pour weather :
-weather=dt$weather
+weather=train$weather
 index_na_we=which(is.na(weather))
-index_na_we
+index_na_we # on voit tous les indices des 53 valeurs manquantes dans la colonne weather
 #weather le long de la journée i, on estimera donc la valeur manquante par la moyenne sur ce meme jour, arrondi en entier
 weather[index_na_we]
 for (i in index_na_we)
@@ -83,54 +83,51 @@ for (i in index_na_we)
 
 weather=as.factor(weather)
 
+index_na_we=which(is.na(weather))
+index_na_we # plus de valeurs manquantes
+train$weather <- weather
 #### data frame ####
+str(train)
+summary(train)
+train <- train %>%
+  select(-casual, -registered) %>% # On supprime les colonnes casual et registered, seul total nous interesse
+  mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%d %H:%M:%S"))
+
+summary(train)
+View(train) #data frame final d'entrainement du modèle bien "propre" 
 
 
-#data frame final "propre" et trié:
-
-dft=data.frame(timedata,season,holidayy,workingdayy,weather,dt$temp,dt$atemp,dt$humidity,dt$windspeed,dt$casual,dt$registered,dt$count)
-names(dft)[match(names(dft)[c(1,3,4,6,7,8,9,10,11,12)],names(dft))] <- c("datetime","holiday","workingday","temp","atemp","humidity","windspeed","casual","registered","count")
-head(dft)
-summary(dft)
-
-library(dplyr)
-#la library dplyr
-dft1 <- dft %>% dplyr::filter(!is.na(dft$casual))#sans NA
-# dft1 <- dft1 %>% dplyr::filter(!is.na(dft1$registred))
-n_na <- length(dft1[,1])
-# ?dplyr
-summary(dft1)
 
 #### graphes ####
-colnames(dft1)[1] <- "timedata"
 # ventes totales
 library(ggplot2)
-p <- ggplot(dft1, aes(x=timedata ,y=count,col=season))
+p <- ggplot(train, aes(x=datetime ,y=count,col=season))
 p <- p + geom_point() +
   xlab("dates") + 
   ylab("Ventes par heure") +
   labs(col='Ventes moyennes par saison')
 p
-# :1 = printemps , 2 = été, 4 = hiver'
+
 
 # vente des clients enregistrés
 
-p <- ggplot(dft1, aes(x= dft1$timedata ,y=dft1$registred,col=dft1$season,group=as.factor(dft1$holiday)))
-p <- p + geom_point()+ geom_smooth(method=lm)
+#p <- ggplot(train, aes(x= train$datetime ,y=train$registred,col=train$season,group=as.factor(train$holiday)))
+#p <- p + geom_point()+ geom_smooth(method=lm)
 #p
 
 # vente des clients non enregistrés :
 
-p <- ggplot(dft1, aes(x= dft1$timedata ,y=dft1$casual,col=dft1$season,group=as.factor(dft1$holiday)))
-p <- p + geom_point()+ geom_smooth(method=lm)
+#p <- ggplot(train, aes(x= train$datetime ,y=train$casual,col=train$season,group=as.factor(train$holiday)))
+#p <- p + geom_point()+ geom_smooth(method=lm)
 #p
+
 
 
 
 
 #### modele glm ####
 
-mod=glm(dft[,12]~dft[,2],dft,family="poisson")  # regarder gls ?
+mod=glm(train[,10]~train[,2],train,family="poisson")  # regarder gls ?
 plot(mod)
 coef(mod)
 
@@ -139,25 +136,42 @@ coef(mod)
 # test : 6493 de 2011/01/20 0:0:0  -->  2012/12/31 23:0:0
 # train : 10886 de 2011/01/01 0:0:0  -->  2012/12/19 23: 0 :0
 
-dtest <- read.csv('C:/Users/issla/Desktop/entretien/dataset_test.csv',sep=",")
-n_test <- length(dtest$datetime)
-vente_casual <- as.vector(rep(0,n_test))
-vente_registred <- rep(0,n_test)
-vente_totale <- rep(0,n_test)
-x1=as.factor(dtest$season)
-x2=dtest$holiday
-x3=dtest$workingday
-x4=dtest$weather
-x5=cut(dtest$temp,c(0.78,4.84,8.86,12.9,16.9,20.9,24.9,28.9,33,37,41))
-summary(x5)
-x6=cut(dtest$atemp,c(-0.1,5.23,9.7,14.2,18.6,23.1,27.6,32,36.5,41,45.5,50.1))
-summary(x6)
-x7=cut(dtest$humidity,c(-0.1,10,20,30,40,50,60,70,80,90,100))
-x8=cut(dtest$windspeed,c(-0.056,5.6,11.2,16.8,22.4,28,33.6,39.2,44.8,50.4,56.1))
-test.fact=data.frame(x1,x2,x3,x4,x5,x6,x7,x8,vente_casual,vente_registred,vente_totale)
-colnames(test.fact)=c("season","holiday","workingday","weather","tempfact","atempfact","humifact","windfact","dcasual","dregistred","dcount")
-summary(test.fact)
-dim(test.fact)
+test <- read.csv("dataset_test.csv")
+View(test)
+summary(test)
+str(test)
+test <- test %>%
+  mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%d %H:%M:%S"),
+         season = factor(season),
+         holiday = factor(holiday),
+         workingday = factor(workingday),
+         weather = factor(weather)) 
+str(test) # data bien propre et même structure que train
+str(train)
+# tout est identique entre test et train, manque que season à remettre sur 1,2,3,4
+levels(train$season) <- c("1","2","3","4")
+str(train)
+#ok, on passe à l'entrainement du modèle
+
+
+library(caret)
+
+
+model <- train(count ~ ., data = train, method = "lm", trControl = trainControl(method = "cv", number = 5))
+
+# Prédiction sur les données de test
+count_pred <- data.frame(count_pred = rep(0, nrow(test))) # on initialise à 0
+test <- cbind(test,count_pred)
+View(test)
+predictions <- predict(model, newdata = test)
+str(predictions)
+length(predictions)
+length(test$datetime)
+# Évaluation de la performance du modèle
+RMSE <- sqrt(mean((test$count - predictions)^2))
+cat("La RMSE du modèle est :", RMSE)
+View(test)
+
 
 
 #### prédiction modèle à effet mixte ####
