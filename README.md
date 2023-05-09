@@ -4,7 +4,7 @@
 
 
 <p align="center">
-  <img src="https://github.com/iss3110/sujet-d-entretien-data-science/blob/main/Vente%20par%20heur,%20couleurs%20par%20saison.png?raw=true" title="Ventes par heure">
+  <img src="https://github.com/iss3110/sujet-d-entretien-data-science/blob/main/Vente%20par%20heure,%20couleurs%20par%20saison.png?raw=true" title="Ventes par heure">
 </p>
 
 
@@ -64,8 +64,8 @@ Cordialement.
 
 ---  
 
-## Cloner le dossier principal en copiant le lien https dans l'onglet <>Code, allez sur RStudio, File, New Project, Version de Control, Git, coller le lien dans Repository URL, avant tout, il faut synchroniser son github avec l'environnement local Git RStudio 
+## Si tu veux essayer ma solution et ajouter ta contribution, cloner le dossier principal en copiant le lien https dans l'onglet <>Code, allez sur RStudio, File, New Project, Version de Control, Git, coller le lien dans Repository URL, avant tout, il faut synchroniser son github avec l'environnement local Git RStudio 
 ## Sur Git :
 
-git config --global user.name "Votre nom d'utilisateur GitHub"
+git config --global user.name "Votre nom d'utilisateur GitHub"  
 git config --global user.email "Votre adresse e-mail GitHub"
