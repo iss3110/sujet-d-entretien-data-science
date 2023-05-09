@@ -3,14 +3,17 @@ train <- read.csv('dataset_train.csv',sep=";")
 str(train)
 head(train)
 summary(train)
-train=as.data.frame(train[order(train[,1],decreasing=F), ])
+train <- as.data.frame(train[order(train[,1],decreasing=F), ])
 
 table(train$season)
 # ?table
 n=length(train$datetime) # 10886
-#modele a effet mixtes ?
-#On remarque que la variable season est mal codée, elle prend 12 modalités au lieu de 4 (-2,1.5,Mist..)
 
+## Prétraitement des données, estimation des valeurs manquantes
+
+# des valeurs abérantes dans season, elle prend 12 modalités au lieu de 4 (-2,1.5,Mist..)
+
+# J'ai choisi de le déduire à partir de la date :
 season=rep("1",n)#hiver
 index_ete=( as.numeric( format(timedata,format = "%m%d")) > 0620) & (as.numeric(format(timedata, format = "%m%d")) < 0923) #été
 season[index_ete]="3" #ete
@@ -26,24 +29,23 @@ season[index_printemps]="2" #printemps
 season <- factor(season,levels = c(1,2,3,4),labels = c("1-hiver","2-printemps","3-été","4-automne"))
 str(season)
 table(season) # maintenant la variable season est bien codée
-train[0:15,]
-length(season) # 10886
-length(train$season)
+
 train$season <- season
-train[0:15,]
+
 View(train) # la variable season est bien remise
 #### holiday ####
 
-#holiday:
-#il y a 73 valeurs non indiquées de la variable holiday
+# il y a 73 valeurs non indiquées de la variable holiday
+# au lieu d'éliminer les lignes et perdre des données, on peut estimer ces valeurs
 index_na_holi=which(is.na(train$holiday))
 holidayy=train$holiday
 holidayy[index_na_holi]=holidayy[index_na_holi-1] #les valeurs non indiquées prennent la valeur la plus proche (supposant que c'est la plus probable)
 holidayy=as.factor(holidayy)
+
 train$holiday <- holidayy
 
+## workingday:
 
-#workingday:
 workingdayy=train$workingday
 index_na_wo=which(is.na(workingdayy))
 
@@ -65,8 +67,10 @@ for (i in 1:n)
     workingdayy[i]=1
 
 workingdayy=as.factor(workingdayy)
+table(workingdayy)
 
 train$workingday <- workingdayy
+
 #### weather ####
 
 #la meme pour weather :
@@ -82,11 +86,12 @@ for (i in index_na_we)
 }
 
 weather=as.factor(weather)
+table(weather)
 
-index_na_we=which(is.na(weather))
-index_na_we # plus de valeurs manquantes
 train$weather <- weather
+
 #### data frame ####
+
 str(train)
 summary(train)
 train <- train %>%
@@ -94,7 +99,7 @@ train <- train %>%
   mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%d %H:%M:%S"))
 
 summary(train)
-View(train) #data frame final d'entrainement du modèle bien "propre" 
+View(train) #data frame final d'entrainement du modèle prêt à l'utilisation 
 
 
 
@@ -131,8 +136,6 @@ mod=glm(train[,10]~train[,2],train,family="poisson")  # regarder gls ?
 plot(mod)
 coef(mod)
 
-#### préparation données test pour prédiction ####
-
 # test : 6493 de 2011/01/20 0:0:0  -->  2012/12/31 23:0:0
 # train : 10886 de 2011/01/01 0:0:0  -->  2012/12/19 23: 0 :0
 
@@ -153,10 +156,9 @@ levels(train$season) <- c("1","2","3","4")
 str(train)
 #ok, on passe à l'entrainement du modèle
 
+## classification ey regression 
 
 library(caret)
-
-
 model <- train(count ~ ., data = train, method = "lm", trControl = trainControl(method = "cv", number = 5))
 
 # Prédiction sur les données de test
@@ -167,42 +169,12 @@ predictions <- predict(model, newdata = test)
 str(predictions)
 length(predictions)
 length(test$datetime)
+
 # Évaluation de la performance du modèle
 RMSE <- sqrt(mean((test$count - predictions)^2))
 cat("La RMSE du modèle est :", RMSE)
 View(test)
 
-
-
-#### prédiction modèle à effet mixte ####
-
-#model1=lme(fixed=dcount~season+tempfact+atempfact,random=~1|season)
-newtest=data.frame(x1,x5,x6,vente_totale)
-colnames(newtest) <- c("season","tempfact","atempfact","dcount")
-names(newtest)
-summary(newtest)
-pred=predict(model1,newdata=newtest)
-plot(c(dft1$dt.count,3*pred),type="l")
-summary(test.fact)
-plot(model1)
-summary(model1)
-qqnorm(residuals(model1))
-qqline(residuals(model1)) # Normality OK
-
-plot(density(residuals(model1))) ## heteroscedasticity present (lme should handle this??) #
-
-summary(model1)
-anova(model1,test=T,type="marginal")
-
-plot.lme(model1)
-
-#### estimation non paramétrique ####
-#delsol
-library(sm)
-d=density(dft1[,12],bw='ucv',kernel='e')
-d2=sm.density(dft1[,12])
-sm.regression(dft1[,c()],alti,h=h1,structure.2d='scaled')
-predict(model1,newdata=test.fact,level=0:1)
 
 
 
@@ -246,38 +218,38 @@ model=lme()
 #projection des modalités sur le plan de l'acp, le barycente de chaque modalité projeté sur le graph d'individus pas des variables
 
 #aide a l'interpretation : la qualité de representation(var et indiv), et la contribution
+
+
+
+
+
+
+
 #### modèle de régression à effet mixte (données  qualitatives explicatives) ####
 
 library(nlme)
 #il faut coder temperature, humidité et windspeed en facteurs pour cette etude
 
 #temperature comme facteur
-tempfact <- cut(dft$temp,c(-10,0,15,30,55))
+tempfact <- cut(train$temp,c(-10,0,15,30,55))
 table(tempfact)
-atempfact <- cut(dft$atemp,c(-10,0,15,30,55))
+atempfact <- cut(train$atemp,c(-10,0,15,30,55))
 table(atempfact)
-humifact <- cut(dft$humidity,c(0,30,50,70,100))
+humifact <- cut(train$humidity,c(0,30,50,70,100))
 table(humifact)
 summary(humifact)
-windfact <- cut(as.integer(dft$windspeed),10)
+windfact <- cut(as.integer(train$windspeed),10)
 
-dft.fact <- data.frame(season,holidayy,workingdayy,weather,tempfact,atempfact,humifact,windfact,dft[,10:12])
+train.fact <- data.frame(season,holidayy,workingdayy,weather,tempfact,atempfact,humifact,windfact,train[,10:12])
 
-summary(dft.fact)
-colnames(dft.fact)
+summary(train.fact)
+colnames(train.fact)
 
 #library(dplyr)
-#dft1 <- dft %>% filter(!is.na(dft$dt.casual),!is.na(dft$dt.registered))#s
-#dft.fact1 <- dft.fact %>% filter(!is.na(dft.fact$dt.casual),!is.na(dft.fact$dt.registered))
+#dft1 <- train %>% filter(!is.na(train$casual),!is.na(train$registered))#s
+#train.fact1 <- train.fact %>% filter(!is.na(train.fact$casual),!is.na(train.fact$registered))
 
-dcount=dft$count
-dcasual=dft$casual
-dregistred=dft$registered
 #modele de regression a effet mixte:
-model1=lme(fixed=dcount~season+tempfact+atempfact,random=~1|tempfact)
+model1=lme(fixed=train$count~train$season+train$tempfact+train$atempfact,random=~1|train$tempfact)
 coef(model1)
 summary(model1)
-str(season)
-class(season)
-str(tempfact)
-str(atempfact)
