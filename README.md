@@ -64,4 +64,8 @@ Cordialement.
 
 ---  
 
-## Cloner le dossier principal en copiant le lien https dans l'onglet <>Code, allez sur RStudio, File, New Project, Version de Control, Git, coller le lien dans Repository URL, avant tout, il faut synchroniser son github avec l'environnement local Git RStudio
+## Cloner le dossier principal en copiant le lien https dans l'onglet <>Code, allez sur RStudio, File, New Project, Version de Control, Git, coller le lien dans Repository URL, avant tout, il faut synchroniser son github avec l'environnement local Git RStudio 
+## Sur Git :
+
+git config --global user.name "Votre nom d'utilisateur GitHub"
+git config --global user.email "Votre adresse e-mail GitHub"
