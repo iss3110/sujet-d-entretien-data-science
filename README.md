@@ -4,7 +4,7 @@
 
 
 <p align="center">
-  <img src="https://github.com/iss3110/sujet-d-entretien-data-science/blob/main/Vente%20par%20heur,%20couleurs%20par%20saison.png?raw=true" title="Ventes par heure">
+  <img src="https://github.com/iss3110/sujet-d-entretien-data-science/blob/main/Vente%20par%20heure,%20couleurs%20par%20saison.png?raw=true" title="Ventes par heure">
 </p>
 
 
