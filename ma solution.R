@@ -1,3 +1,7 @@
+library(dplyr)
+library(randomForest)
+library(caret)
+
 train <- read.csv('dataset_train.csv',sep=";")
 
 str(train)
@@ -15,9 +19,9 @@ n=length(train$datetime) # 10886
 
 # J'ai choisi de le déduire à partir de la date :
 season=rep("1",n)#hiver
-index_ete=( as.numeric( format(timedata,format = "%m%d")) > 0620) & (as.numeric(format(timedata, format = "%m%d")) < 0923) #été
+index_ete=( as.numeric( format(train$datetime,format = "%m%d")) > 0620) & (as.numeric(format(train$datetime, format = "%m%d")) < 0923) #été
 season[index_ete]="3" #ete
-
+index_ete
 index_automne=((format(timedata,format = "%m%d") > "0922" & format(timedata, format = "%m%d") < "1221")) #automne
 season[index_automne]="4" #aut
 
@@ -139,10 +143,16 @@ coef(mod)
 # test : 6493 de 2011/01/20 0:0:0  -->  2012/12/31 23:0:0
 # train : 10886 de 2011/01/01 0:0:0  -->  2012/12/19 23: 0 :0
 
+
+## les données test
+
 test <- read.csv("dataset_test.csv")
 View(test)
 summary(test)
 str(test)
+
+## on remarque que les données test concernent les 20 derniers jours de chaque mois
+
 test <- test %>%
   mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%d %H:%M:%S"),
          season = factor(season),
@@ -254,3 +264,20 @@ model1=lme(fixed=train$count~train$season+train$tempfact+train$atempfact,random=
 coef(model1)
 summary(model1)
 
+
+## Random forest
+
+library(randomForest)
+
+# Créer un modèle Random Forest en utilisant les données d'entraînement
+# L'argument count ~ . spécifie qu'e nous voulons'on veut prédire la 
+# variable count en fonction de toutes les autres variables
+
+rf <- randomForest(train$count ~ ., data = train)
+
+# puis utiliser le modèle pour faire des prédictions sur  test :
+
+predictions_rf <- predict(rf, newdata = test)
+
+output <- data.frame(predictions_rf)
+write.csv(output, file = "predictions_rf.csv", row.names = FALSE)
