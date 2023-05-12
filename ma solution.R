@@ -3,7 +3,7 @@ library(randomForest)
 library(caret)
 
 train <- read.csv('dataset_train.csv',sep=";")
-
+length(train$datetime)
 str(train)
 head(train)
 summary(train)
@@ -147,6 +147,7 @@ coef(mod)
 ## les données test
 
 test <- read.csv("dataset_test.csv")
+length(test$datetime)
 View(test)
 summary(test)
 str(test)
