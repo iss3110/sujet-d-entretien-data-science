@@ -1,17 +1,23 @@
 library(dplyr)
 library(randomForest)
 library(caret)
+library(ggplot2)
+
+
 
 train <- read.csv('dataset_train.csv',sep=";")
-length(train$datetime)
+
 str(train)
 head(train)
 summary(train)
-train <- as.data.frame(train[order(train[,1],decreasing=F), ])
+train <- as.data.frame(train[order(train[,1],decreasing=F), ]) # tri selon la date
 
 table(train$season)
 # ?table
 n=length(train$datetime) # 10886
+
+train <- train %>%
+  mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%d %H:%M:%S")) # mettre la chaine de caractère en format date
 
 ## Prétraitement des données, estimation des valeurs manquantes
 
@@ -19,13 +25,14 @@ n=length(train$datetime) # 10886
 
 # J'ai choisi de le déduire à partir de la date :
 season=rep("1",n)#hiver
-index_ete=( as.numeric( format(train$datetime,format = "%m%d")) > 0620) & (as.numeric(format(train$datetime, format = "%m%d")) < 0923) #été
+
+index_ete=( as.numeric( format(train[,1],format = "%m%d")) > 0620) & (as.numeric(format(train[,1], format = "%m%d")) < 0923) #été
 season[index_ete]="3" #ete
-index_ete
-index_automne=((format(timedata,format = "%m%d") > "0922" & format(timedata, format = "%m%d") < "1221")) #automne
+
+index_automne=((format(train$datetime,format = "%m%d") > "0922" & format(train$datetime, format = "%m%d") < "1221")) #automne
 season[index_automne]="4" #aut
 
-index_printemps=((format(timedata,format = "%m%d") > "0319" & format(timedata, format = "%m%d") < "0621"))#printemps
+index_printemps=((format(train$datetime,format = "%m%d") > "0319" & format(train$datetime, format = "%m%d") < "0621"))#printemps
 season[index_printemps]="2" #printemps
 
 #index_hiver=as.logical(rep(1,n)-index_ete-index_automne-index_printemps)
@@ -61,8 +68,8 @@ index_na_wo=which(is.na(workingdayy))
 
 for (i in index_na_wo)
 {
-  ind=format(timedata,format = "%y%m%d")==format(timedata[i],format = "%y%m%d") #les indices des lignes qui correspondent au meme jour que i, i parcours les NA.
-  workingdayy[i]=round(mean(dt$workingday[which(!is.na(dt$workingday))])) #on prend la moyenne de workinday sur le meme jour
+  ind=format(train[,1],format = "%y%m%d")==format(train[i,1],format = "%y%m%d") #les indices des lignes qui correspondent au meme jour que i, i parcours les NA.
+  workingdayy[i]=round(mean(train$workingday[which(!is.na(train$workingday))])) #on prend la moyenne de workinday sur le meme jour
 }
 # il y a des jours travaillés ou l'on a mis 3 au lieu de 1:
 
@@ -85,7 +92,7 @@ index_na_we # on voit tous les indices des 53 valeurs manquantes dans la colonne
 weather[index_na_we]
 for (i in index_na_we)
 {
-  ind=format(timedata,format = "%y%m%d")==format(timedata[i],format = "%y%m%d") #indices des lignes correspondant au meme jour i (qui vaut NA)
+  ind=format(train[,1],format = "%y%m%d")==format(train[i,1],format = "%y%m%d") #indices des lignes correspondant au meme jour i (qui vaut NA)
   weather[i]=round(mean(weather[ind][which(!is.na(weather[ind]))]))
 }
 
@@ -99,8 +106,7 @@ train$weather <- weather
 str(train)
 summary(train)
 train <- train %>%
-  select(-casual, -registered) %>% # On supprime les colonnes casual et registered, seul total nous interesse
-  mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%d %H:%M:%S"))
+  select(-casual, -registered) # On supprime les colonnes casual et registered, seul total nous interesse
 
 summary(train)
 View(train) #data frame final d'entrainement du modèle prêt à l'utilisation 
