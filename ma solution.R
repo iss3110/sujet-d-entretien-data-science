@@ -1,9 +1,11 @@
 library(dplyr)
-library(randomForest)
-library(caret)
 library(ggplot2)
-
-
+library(caret)
+library(nlme)
+library(randomForest)
+library(ade4)
+library(factoextra)
+library(FactoMineR)
 
 train <- read.csv('dataset_train.csv',sep=";")
 
@@ -115,7 +117,7 @@ View(train) #data frame final d'entrainement du modèle prêt à l'utilisation
 
 #### graphes ####
 # ventes totales
-library(ggplot2)
+
 p <- ggplot(train, aes(x=datetime ,y=count,col=season))
 p <- p + geom_point() +
   xlab("dates") + 
@@ -135,19 +137,6 @@ p
 #p <- ggplot(train, aes(x= train$datetime ,y=train$casual,col=train$season,group=as.factor(train$holiday)))
 #p <- p + geom_point()+ geom_smooth(method=lm)
 #p
-
-
-
-
-
-#### modele glm ####
-
-mod=glm(train[,10]~train[,2],train,family="poisson")  # regarder gls ?
-plot(mod)
-coef(mod)
-
-# test : 6493 de 2011/01/20 0:0:0  -->  2012/12/31 23:0:0
-# train : 10886 de 2011/01/01 0:0:0  -->  2012/12/19 23: 0 :0
 
 
 ## les données test
@@ -173,9 +162,8 @@ levels(train$season) <- c("1","2","3","4")
 str(train)
 #ok, on passe à l'entrainement du modèle
 
-## classification ey regression 
+## 1er modèle classification et regression du package caret 
 
-library(caret)
 model <- train(count ~ ., data = train, method = "lm", trControl = trainControl(method = "cv", number = 5))
 
 # Prédiction sur les données de test
@@ -193,58 +181,19 @@ cat("La RMSE du modèle est :", RMSE)
 View(test)
 
 
+#### modele glm ####
 
+mod=glm(train[,10]~train[,2],train,family="poisson")  # regarder gls ?
+plot(mod)
+coef(mod)
 
-#### acp ####
-
-#cercle dorrélation
-#cor1
-#cor(as.matrix((dft1[,c(2:3,6:12)])),method="spearman", use = "complete.obs") #completer les 7 valeurs manquantes
-#holiday potentiellement a exculre: aucun lien avec aucune variable
-library(ade4)
-library(factoextra)
-rollers.pca=dudi.pca(dft1[,6:12],scale=TRUE)
-summary(rollers.pca)
-plot(rollers.pca$tab[,c(1,7)]) #temperature explique pas mal count,
-plot(rollers.pca$tab[,c(4,7)]) #plutot faible valeurs de windspeed
-plot(rollers.pca$tab[,c(6,7)]) #useless puisque count=casual+registred
-fviz_eig(rollers.pca)
-s.corcircle(rollers.pca$co)
-?s.corcircle
-library(FactoMineR)
-#ACP sur les 7 dernieres variables quantitatives, avec season comme variable supp
-res.pca = PCA(dft1[,c(2,6:12)],quali.sup=1,scale.unit=TRUE,axes=c(1,2))
-summary.PCA(res.pca)
-plot()
-#ACP avec holiday comme variable supp
-res.pca = PCA(dft1[,c(3,6:12)],quali.sup=1,quanti.sup = c(3,6,7),scale.unit=TRUE,axes=c(1,2))
-summary.PCA(res.pca)
-#avec workingday
-res.pca = PCA(dft1[,c(4,6:12)],quali.sup=1,quanti.sup = c(3,6,7),scale.unit=TRUE,axes=c(1,2))
-summary.PCA(res.pca)
-#avec weather
-res.pca = PCA(dft1[,c(5,6:12)],quali.sup=1,quanti.sup = c(3,6,7),scale.unit=TRUE,axes=c(1,2))
-summary.PCA(res.pca)
-library(factoextra)
-
-?PCA
-res.pca$eig
-plot(res.pca)
-model=lme()
-?PCA 
-#projection des modalités sur le plan de l'acp, le barycente de chaque modalité projeté sur le graph d'individus pas des variables
-
-#aide a l'interpretation : la qualité de representation(var et indiv), et la contribution
-
-
-
-
+# test : 6493 de 2011/01/20 0:0:0  -->  2012/12/31 23:0:0
+# train : 10886 de 2011/01/01 0:0:0  -->  2012/12/19 23: 0 :0
 
 
 
 #### modèle de régression à effet mixte (données  qualitatives explicatives) ####
 
-library(nlme)
 #il faut coder temperature, humidité et windspeed en facteurs pour cette etude
 
 #temperature comme facteur
@@ -274,7 +223,6 @@ summary(model1)
 
 ## Random forest
 
-library(randomForest)
 
 # Créer un modèle Random Forest en utilisant les données d'entraînement
 # L'argument count ~ . spécifie qu'e nous voulons'on veut prédire la 
@@ -288,3 +236,45 @@ predictions_rf <- predict(rf, newdata = test)
 
 output <- data.frame(predictions_rf)
 write.csv(output, file = "predictions_rf.csv", row.names = FALSE)
+
+
+
+#### acp ####
+
+#cercle dorrélation
+#cor1
+#cor(as.matrix((dft1[,c(2:3,6:12)])),method="spearman", use = "complete.obs") #completer les 7 valeurs manquantes
+#holiday potentiellement a exculre: aucun lien avec aucune variable
+
+rollers.pca=dudi.pca(dft1[,6:12],scale=TRUE)
+summary(rollers.pca)
+plot(rollers.pca$tab[,c(1,7)]) #temperature explique pas mal count,
+plot(rollers.pca$tab[,c(4,7)]) #plutot faible valeurs de windspeed
+plot(rollers.pca$tab[,c(6,7)]) #useless puisque count=casual+registred
+fviz_eig(rollers.pca)
+s.corcircle(rollers.pca$co)
+?s.corcircle
+
+#ACP sur les 7 dernieres variables quantitatives, avec season comme variable supp
+res.pca = PCA(dft1[,c(2,6:12)],quali.sup=1,scale.unit=TRUE,axes=c(1,2))
+summary.PCA(res.pca)
+plot()
+#ACP avec holiday comme variable supp
+res.pca = PCA(dft1[,c(3,6:12)],quali.sup=1,quanti.sup = c(3,6,7),scale.unit=TRUE,axes=c(1,2))
+summary.PCA(res.pca)
+#avec workingday
+res.pca = PCA(dft1[,c(4,6:12)],quali.sup=1,quanti.sup = c(3,6,7),scale.unit=TRUE,axes=c(1,2))
+summary.PCA(res.pca)
+#avec weather
+res.pca = PCA(dft1[,c(5,6:12)],quali.sup=1,quanti.sup = c(3,6,7),scale.unit=TRUE,axes=c(1,2))
+summary.PCA(res.pca)
+
+?PCA
+res.pca$eig
+plot(res.pca)
+model=lme()
+?PCA 
+#projection des modalités sur le plan de l'acp, le barycente de chaque modalité projeté sur le graph d'individus pas des variables
+
+#aide a l'interpretation : la qualité de representation(var et indiv), et la contribution
+
