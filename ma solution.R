@@ -42,7 +42,7 @@ str(season)
 table(season) # maintenant la variable season est bien codée
 
 train$season <- season
-
+rm(season,index_printemps,index_automne,index_ete)
 ## workingday:
 
 # En résumé :
@@ -166,7 +166,10 @@ levels(train$season) <- c("1","2","3","4")
 str(train)
 #ok, on passe à l'entrainement du modèle
 
+######################## |train | test| #############################
+
 ## 1er modèle classification et regression du package caret 
+
 
 model <- train(count ~ ., data = train, method = "glm", trControl = trainControl(method = "cv", number = 100))
 
@@ -177,22 +180,52 @@ str(test)
 predictions <- predict(model, newdata = test)
 str(predictions)
 head(predictions)
-View(predictions)
+
+length(as.numeric(predictions))
+length(test$datetime)
 length(predictions)
 length(test$datetime)
 
-# Évaluation de la performance du modèle
-RMSE <- sqrt(mean((test$count - predictions)^2))
-cat("La RMSE du modèle est :", RMSE)
-View(test)
+count <- c(as.numeric(predictions[1]),as.numeric(predictions),as.numeric(tail(predictions,1)))
+count <- count-min(count)
+test_caret <- cbind(test,count)
 
+
+q <- ggplot(test_caret, aes(x=datetime ,y=count,col=season))
+q <- q + geom_point() +
+  xlab("dates") + 
+  ylab("Ventes par heure") +
+  labs(col='Ventes moyennes par saison')
+q
+p
+
+# Évaluation de la performance du modèle
+RMSE <- sqrt(mean((test_caret$count - predictions)^2))
+cat("La RMSE du modèle est :", RMSE)
 
 #### modele glm ####
 
-mod=glm(train[,10]~train[,2],train,family="poisson")  # regarder gls ?
+mod=glm(count~season+holiday+workingday+weather+temp+atemp+humidity+windspeed,train,family="poisson")  # regarder gls ?
 plot(mod)
 coef(mod)
 
+predictions_glm <- predict(mod, test, type = "response")
+pr_count <- as.numeric(predictions_glm)
+
+test_glm <- cbind(test,pr_count)
+names(test_glm)[10] <- "count"
+train$provenance <- "données connues"
+test_glm$provenance <- "glm_pred"
+
+data_set <- rbind(train,test_glm)
+data_set <- as.data.frame(data_set[order(data_set[,1],decreasing=F), ]) 
+
+q <- ggplot(data_set, aes(x=datetime ,y=count,col=provenance))
+q <- q + geom_point() +
+  xlab("dates") + 
+  ylab("Ventes par heure") +
+  labs(col='Ventes moyennes par saison')
+q
 # test : 6493 de 2011/01/20 0:0:0  -->  2012/12/31 23:0:0
 # train : 10886 de 2011/01/01 0:0:0  -->  2012/12/19 23: 0 :0
 
