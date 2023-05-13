@@ -148,7 +148,6 @@ p
 
 test <- read.csv("dataset_test.csv")
 length(test$datetime)
-View(test)
 summary(test)
 str(test)
 
@@ -169,14 +168,16 @@ str(train)
 
 ## 1er modèle classification et regression du package caret 
 
-model <- train(count ~ ., data = train, method = "lm", trControl = trainControl(method = "cv", number = 5))
+model <- train(count ~ ., data = train, method = "glm", trControl = trainControl(method = "cv", number = 100))
 
+str(train)
 # Prédiction sur les données de test
-count_pred <- data.frame(count_pred = rep(0, nrow(test))) # on initialise à 0
-test <- cbind(test,count_pred)
-View(test)
+
+str(test)
 predictions <- predict(model, newdata = test)
 str(predictions)
+head(predictions)
+View(predictions)
 length(predictions)
 length(test$datetime)
 
@@ -282,4 +283,15 @@ model=lme()
 #projection des modalités sur le plan de l'acp, le barycente de chaque modalité projeté sur le graph d'individus pas des variables
 
 #aide a l'interpretation : la qualité de representation(var et indiv), et la contribution
+
+
+#Il s'agit d'un problème de prédiction de valeurs manquantes, ou imputation de données manquantes. Il existe plusieurs modèles adaptés pour ce type de problème, parmi lesquels :
+
+#K-Nearest Neighbors (KNN) : Cette méthode consiste à trouver les K observations les plus proches de la donnée manquante et d'estimer la valeur manquante en calculant la moyenne ou la médiane des K observations les plus proches.
+
+#Modèles de régression : Les modèles de régression tels que la régression linéaire, la régression logistique ou la régression polynomiale peuvent être utilisés pour imputer les valeurs manquantes en fonction des valeurs des autres variables.
+
+#Random Forest : C'est une méthode d'apprentissage ensembliste qui peut être utilisée pour la prédiction de valeurs manquantes. Elle consiste à entraîner plusieurs arbres de décision sur des sous-échantillons de données et de prendre la moyenne des prédictions de chaque arbre.
+
+#Imputation par chaînes de Markov : Cette méthode utilise la structure de dépendance entre les variables pour imputer les valeurs manquantes. Elle suppose que la distribution des données manquantes dépend uniquement de la distribution des données disponibles.
 
