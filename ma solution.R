@@ -9,9 +9,8 @@ library(FactoMineR)
 
 train <- read.csv('dataset_train.csv',sep=";")
 
-str(train)
-head(train)
 summary(train)
+head(train)
 train <- as.data.frame(train[order(train[,1],decreasing=F), ]) # tri selon la date
 
 table(train$season)
@@ -45,6 +44,21 @@ table(season) # maintenant la variable season est bien codée
 train$season <- season
 
 ## workingday:
+
+# En résumé :
+summary(train$workingday)
+
+# éliminer les NA
+train$workingday <- na.locf(train$workingday) 
+
+# il y a des jours travaillés ou l'on a mis 3 au lieu de 1:
+train$workingday[train$workingday == 3] <- 1
+
+# mettre en forme factor
+train$workingday <- as.factor(train$workingday)
+
+# nouveau résumé
+summary(train$workingday)
 
 #workingdayy <- train$workingday
 #workkkin <- train$workingday
@@ -84,24 +98,9 @@ train$season <- season
 #t2[3]
 
 
-
-# En résumé :
-summary(train$workingday)
-
-train$workingday <- na.locf(train$workingday) # éliminer les NA
-
-# il y a des jours travaillés ou l'on a mis 3 au lieu de 1:
-
-train$workingday[train$workingday == 3] <- 1
-
-train$workingday <- as.factor(train$workingday)
-summary(train$workingday)
 #### weather ####
 
-weather=train$weather
-index_na_we=which(is.na(weather))
-
-# weather on remplace la valeur manquante par la précédente, càd le temps d'une heure avant
+# la même façon weather on remplace la valeur manquante par la précédente, càd le temps d'une heure avant
   
 summary(train$weather)
 train$weather <- as.factor(na.locf(train$weather))
@@ -119,9 +118,7 @@ train <- train %>%
   select(-casual, -registered) # On supprime les colonnes casual et registered, seul total nous interesse
 
 summary(train)
-View(train) #data frame final d'entrainement du modèle prêt à l'utilisation 
-
-
+#data frame final d'entrainement du modèle prêt à l'utilisation 
 
 #### graphes ####
 # ventes totales
