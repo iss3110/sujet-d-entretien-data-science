@@ -59,10 +59,44 @@ train$holiday <- holidayy
 
 ## workingday:
 
-workingdayy=train$workingday
+workingdayy <- train$workingday
+workkkin <- train$workingday
+
 index_na_wo=which(is.na(workingdayy))
 index_na_wo # 131 NA's
 str(index_na_wo)
+
+train[63,]
+# 1ere solution
+while(sum(which(is.na(workingdayy)))) # tant qu'il y a un NA
+{
+  for (i in which(is.na(workingdayy)))
+  { workingdayy[i] <- workingdayy[i+1]
+  }
+}
+
+#2eme solution
+# Remplir les valeurs manquantes avec la dernière observation connue
+workingdayy <- na.locf(workingdayy) # package zoo
+
+# comparer temps d'exécution
+
+
+t1 <- system.time({
+  while(sum(which(is.na(workingdayy)))) {
+    for (i in which(is.na(workingdayy))) {
+      workingdayy[i] <- workingdayy[i+1]
+    }
+  }
+})
+
+t2 <- system.time({
+  workkkin <- na.locf(workkkin)
+})
+
+print(t1)
+t2[3]
+
 #t[35,]
 #ind=format(timedata,format = "%y%m%d")=="110507"
 #t[ind,4]
@@ -70,14 +104,7 @@ str(index_na_wo)
 #workingdayy[35]=mean(t[ind,4][which(!is.na(t[ind,4]))])
 summary(workingdayy)
 
-train[63,]
 
-while(sum(which(is.na(workingdayy)))) # tant qu'il y a un NA
-{
-  for (i in which(is.na(workingdayy)))
-  { workingdayy[i] <- workingdayy[i+1]
-  }
-}
 
 # il y a des jours travaillés ou l'on a mis 3 au lieu de 1:
 
