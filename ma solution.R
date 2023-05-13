@@ -6,6 +6,7 @@ library(randomForest)
 library(ade4)
 library(factoextra)
 library(FactoMineR)
+library(zoo)
 
 train <- read.csv('dataset_train.csv',sep=";")
 
@@ -50,6 +51,7 @@ summary(train$workingday)
 
 # éliminer les NA
 train$workingday <- na.locf(train$workingday) 
+
 
 # il y a des jours travaillés ou l'on a mis 3 au lieu de 1:
 train$workingday[train$workingday == 3] <- 1
@@ -205,27 +207,24 @@ cat("La RMSE du modèle est :", RMSE)
 
 #### modele glm ####
 
-mod=glm(count~season+holiday+workingday+weather+temp+atemp+humidity+windspeed,train,family="poisson")  # regarder gls ?
-plot(mod)
-coef(mod)
+mod=glm(count~season+holiday+workingday+weather+temp+atemp+humidity+windspeed,train,family=Gamma(link = "log"))  # regarder gls ? family = Gamma(link = "log"), gaussian, poisson (evenement rare), binomial (0,1)
 
-predictions_glm <- predict(mod, test, type = "response")
-pr_count <- as.numeric(predictions_glm)
+test_glm <- cbind(test , as.numeric(predict(mod, test, type = "response")))
 
-test_glm <- cbind(test,pr_count)
 names(test_glm)[10] <- "count"
 train$provenance <- "données connues"
 test_glm$provenance <- "glm_pred"
 
-data_set <- rbind(train,test_glm)
-data_set <- as.data.frame(data_set[order(data_set[,1],decreasing=F), ]) 
+data_set_glm <- rbind(train,test_glm)
+data_set_glm <- as.data.frame(data_set_glm[order(data_set_glm[,1],decreasing=F), ]) 
 
-q <- ggplot(data_set, aes(x=datetime ,y=count,col=provenance))
+q <- ggplot(data_set_glm, aes(x=datetime ,y=count,col=provenance))
 q <- q + geom_point() +
   xlab("dates") + 
   ylab("Ventes par heure") +
   labs(col='Ventes moyennes par saison')
 q
+
 # test : 6493 de 2011/01/20 0:0:0  -->  2012/12/31 23:0:0
 # train : 10886 de 2011/01/01 0:0:0  -->  2012/12/19 23: 0 :0
 
@@ -267,14 +266,27 @@ summary(model1)
 # L'argument count ~ . spécifie qu'e nous voulons'on veut prédire la 
 # variable count en fonction de toutes les autres variables
 
-rf <- randomForest(train$count ~ ., data = train)
-
+rf_model <- randomForest(count ~ season + holiday + workingday + weather + temp + atemp + humidity + windspeed, data = train, importance = TRUE, ntree = 500)
+summary(rf_model)
 # puis utiliser le modèle pour faire des prédictions sur  test :
 
-predictions_rf <- predict(rf, newdata = test)
+predictions_rf <- predict(rf_model, newdata = test)
 
-output <- data.frame(predictions_rf)
-write.csv(output, file = "predictions_rf.csv", row.names = FALSE)
+test_rf <- cbind(test , as.numeric(predict(rf_model, test, type = "response")))
+names(test_rf)[10] <- "count"
+train$provenance <- "données connues"
+test_rf$provenance <- "rf_pred"
+
+data_set_rf <- rbind(train,test_rf)
+data_set_rf <- as.data.frame(data_set_rf[order(data_set_rf[,1],decreasing=F), ]) 
+
+q <- ggplot(data_set_rf, aes(x=datetime ,y=count,col=provenance))
+q <- q + geom_point() +
+  xlab("dates") + 
+  ylab("Ventes par heure") +
+  labs(col='Ventes moyennes par saison')
+q
+
 
 
 
