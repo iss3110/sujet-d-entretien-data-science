@@ -61,18 +61,24 @@ train$holiday <- holidayy
 
 workingdayy=train$workingday
 index_na_wo=which(is.na(workingdayy))
-
+index_na_wo # 131 NA's
+str(index_na_wo)
 #t[35,]
 #ind=format(timedata,format = "%y%m%d")=="110507"
 #t[ind,4]
 #which(!is.na(t[ind,4]))
 #workingdayy[35]=mean(t[ind,4][which(!is.na(t[ind,4]))])
+summary(workingdayy)
 
-for (i in index_na_wo)
+train[63,]
+
+while(sum(which(is.na(workingdayy)))) # tant qu'il y a un NA
 {
-  ind=format(train[,1],format = "%y%m%d")==format(train[i,1],format = "%y%m%d") #les indices des lignes qui correspondent au meme jour que i, i parcours les NA.
-  workingdayy[i]=round(mean(train$workingday[which(!is.na(train$workingday))])) #on prend la moyenne de workinday sur le meme jour
+  for (i in which(is.na(workingdayy)))
+  { workingdayy[i] <- workingdayy[i+1]
+  }
 }
+
 # il y a des jours travaillés ou l'on a mis 3 au lieu de 1:
 
 for (i in 1:n)
