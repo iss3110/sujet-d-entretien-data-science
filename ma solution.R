@@ -15,7 +15,6 @@ summary(train)
 train <- as.data.frame(train[order(train[,1],decreasing=F), ]) # tri selon la date
 
 table(train$season)
-# ?table
 n=length(train$datetime) # 10886
 
 train <- train %>%
@@ -45,97 +44,73 @@ table(season) # maintenant la variable season est bien codée
 
 train$season <- season
 
-View(train) # la variable season est bien remise
-#### holiday ####
-
-# il y a 73 valeurs non indiquées de la variable holiday
-# au lieu d'éliminer les lignes et perdre des données, on peut estimer ces valeurs
-index_na_holi=which(is.na(train$holiday))
-holidayy=train$holiday
-holidayy[index_na_holi]=holidayy[index_na_holi-1] #les valeurs non indiquées prennent la valeur la plus proche (supposant que c'est la plus probable)
-holidayy=as.factor(holidayy)
-
-train$holiday <- holidayy
-
 ## workingday:
 
-workingdayy <- train$workingday
-workkkin <- train$workingday
+#workingdayy <- train$workingday
+#workkkin <- train$workingday
 
-index_na_wo=which(is.na(workingdayy))
-index_na_wo # 131 NA's
-str(index_na_wo)
+#index_na_wo=which(is.na(workingdayy))
+#index_na_wo # 131 NA's
+#str(index_na_wo)
 
-train[63,]
+#train[63,]
 # 1ere solution
-while(sum(which(is.na(workingdayy)))) # tant qu'il y a un NA
-{
-  for (i in which(is.na(workingdayy)))
-  { workingdayy[i] <- workingdayy[i+1]
-  }
-}
+#while(sum(which(is.na(workingdayy)))) # tant qu'il y a un NA
+  #{
+  #for (i in which(is.na(workingdayy)))
+    #{ workingdayy[i] <- workingdayy[i+1]
+  #  }
+#}
 
-#2eme solution
-# Remplir les valeurs manquantes avec la dernière observation connue
-workingdayy <- na.locf(workingdayy) # package zoo
+#2eme solution : na.locf de zoo
 
 # comparer temps d'exécution
 
 
-t1 <- system.time({
-  while(sum(which(is.na(workingdayy)))) {
-    for (i in which(is.na(workingdayy))) {
-      workingdayy[i] <- workingdayy[i+1]
-    }
-  }
-})
+#t1 <- system.time({
+#  while(sum(which(is.na(workingdayy)))) {
+#    for (i in which(is.na(workingdayy))) {
+#      workingdayy[i] <- workingdayy[i+1]
+#    }
+#  }
+#})
 
-t2 <- system.time({
-  workkkin <- na.locf(workkkin)
-})
-
-print(t1)
-t2[3]
-
-#t[35,]
-#ind=format(timedata,format = "%y%m%d")=="110507"
-#t[ind,4]
-#which(!is.na(t[ind,4]))
-#workingdayy[35]=mean(t[ind,4][which(!is.na(t[ind,4]))])
-summary(workingdayy)
+#t2 <- system.time({
+#  workkkin <- na.locf(workkkin)
+#})
+#summary(workkkin)
+#summary(workingdayy)
+#print(t1)
+#t2[3]
 
 
+
+# En résumé :
+summary(train$workingday)
+
+train$workingday <- na.locf(train$workingday) # éliminer les NA
 
 # il y a des jours travaillés ou l'on a mis 3 au lieu de 1:
 
-for (i in 1:n)
-  if (workingdayy[i]==3)
-    workingdayy[i]=1
+train$workingday[train$workingday == 3] <- 1
 
-workingdayy=as.factor(workingdayy)
-table(workingdayy)
-
-train$workingday <- workingdayy
-
+train$workingday <- as.factor(train$workingday)
+summary(train$workingday)
 #### weather ####
 
-#la meme pour weather :
 weather=train$weather
 index_na_we=which(is.na(weather))
-index_na_we # on voit tous les indices des 53 valeurs manquantes dans la colonne weather
-#weather le long de la journée i, on estimera donc la valeur manquante par la moyenne sur ce meme jour, arrondi en entier
-weather[index_na_we]
-for (i in index_na_we)
-{
-  ind=format(train[,1],format = "%y%m%d")==format(train[i,1],format = "%y%m%d") #indices des lignes correspondant au meme jour i (qui vaut NA)
-  weather[i]=round(mean(weather[ind][which(!is.na(weather[ind]))]))
-}
 
-weather=as.factor(weather)
-table(weather)
+# weather on remplace la valeur manquante par la précédente, càd le temps d'une heure avant
+  
+summary(train$weather)
+train$weather <- as.factor(na.locf(train$weather))
+summary(train$weather)
 
-train$weather <- weather
-
+#### holiday ####
+summary(train$holiday)
+train$holiday <- as.factor(na.locf(train$holiday))
+summary(train$holiday)
 #### data frame ####
 
 str(train)
