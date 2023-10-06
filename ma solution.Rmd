@@ -1,0 +1,74 @@
+---
+title: "Analyse Exploratoire des Ventes de Rollers"
+output: html_document
+---
+
+# Introduction
+Exploration initiale des données sur les ventes de rollers.
+
+```{r librairies, echo=TRUE, warning=FALSE, paged.print=TRUE}
+library(dplyr)
+library(ggplot2)
+library(caret)
+library(nlme)
+library(randomForest)
+library(ade4)
+library(factoextra)
+library(FactoMineR)
+library(zoo)
+
+train <- read.csv('dataset_train.csv',sep=";")
+summary(train)
+head(train)
+```
+
+
+```{r librairies, echo=TRUE, warning=FALSE}
+# tri selon la date
+train <- as.data.frame(train[order(train[,1],decreasing=F), ])
+head(train)
+train <- as.data.frame(train[order(train[,1],decreasing=F), ]) # tri selon la date
+# mettre la chaine de caractère en format date
+train <- train %>%
+  mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%d %H:%M:%S"))
+n=length(train$datetime) # 10886
+table(train$season)
+```
+
+```{r }
+season=rep("1",n)#hiver
+
+index_ete=( as.numeric( format(train[,1],format = "%m%d")) > 0620) & (as.numeric(format(train[,1], format = "%m%d")) < 0923) #été
+season[index_ete]="3" #ete
+
+index_automne=((format(train$datetime,format = "%m%d") > "0922" & format(train$datetime, format = "%m%d") < "1221")) #automne
+season[index_automne]="4" #aut
+
+index_printemps=((format(train$datetime,format = "%m%d") > "0319" & format(train$datetime, format = "%m%d") < "0621"))#printemps
+season[index_printemps]="2" #printemps
+
+#index_hiver=as.logical(rep(1,n)-index_ete-index_automne-index_printemps)
+
+season <- factor(season,levels = c(1,2,3,4),labels = c("1-hiver","2-printemps","3-été","4-automne"))
+str(season)
+table(season) # maintenant la variable season est bien codée
+
+train$season <- season
+rm(season,index_printemps,index_automne,index_ete) #supprime ces variables
+
+```
+
+
+```{r}
+summary(train$workingday)
+```
+
+locf = "Last Observation Carried Forward", ce qui signifie qu'elle remplace les valeurs manquantes par la dernière valeur non manquante observée. Pertinent dans ce cas puisque les observations sont toutes les 1 heure, c'est avec une très grande proba que cette variable soit la même qu'il y a une heure !
+
+```{r}
+train$workingday <- na.locf(train$workingday)
+# en regardant table(workingday) : il faut remplacer certaines valeurs contenant 3 par 1
+train$workingday[train$workingday == 3] <- 1
+train$workingday <- as.factor(train$workingday)
+```
+
